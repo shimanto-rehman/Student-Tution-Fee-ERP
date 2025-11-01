@@ -1,0 +1,211 @@
+<?php
+// application/controllers/Student_fees.php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Student_fees extends CI_Controller {
+    
+    public function __construct() {
+        parent::__construct();
+        $this->load->model('Student_model');
+        $this->load->model('Student_fee_model');
+        $this->load->model('Payment_model');
+        $this->load->helper(['url', 'form']);
+        $this->load->library(['form_validation', 'session']);
+    }
+    
+    // List all student fees
+    public function index() {
+        $data['page_title'] = 'Student Fees Management';
+        
+        // Update late fees before displaying
+        $this->Student_fee_model->update_all_late_fees();
+        
+        // Pagination
+        $limit = 50;
+        $offset = $this->input->get('offset') ?? 0;
+        
+        $data['fees'] = $this->Student_fee_model->get_all($limit, $offset);
+        $data['offset'] = $offset;
+        $data['limit'] = $limit;
+        
+        $this->load->view('templates/header', $data);
+        $this->load->view('student_fees/index', $data);
+        $this->load->view('templates/footer');
+    }
+    
+    // View single fee details
+    public function view($id) {
+        $data['page_title'] = 'Fee Details';
+        $data['fee'] = $this->Student_fee_model->get_by_id($id);
+        
+        if (!$data['fee']) {
+            $this->session->set_flashdata('error', 'Fee not found');
+            redirect('student-fees');
+        }
+        
+        // Get payment history for this fee
+        $data['payments'] = $this->Payment_model->get_by_student_fee($id);
+        $data['total_paid'] = $this->Payment_model->get_total_paid_for_fee($id);
+        $data['balance'] = $data['fee']->total_amount - $data['total_paid'];
+        
+        $this->load->view('templates/header', $data);
+        $this->load->view('student_fees/view', $data);
+        $this->load->view('templates/footer');
+    }
+    
+    // Create new fee
+    public function create() {
+        $data['page_title'] = 'Create Student Fee';
+        
+        // Get students and fee types
+        $data['students'] = $this->Student_model->get_all(1000);
+        $data['fee_types'] = $this->db->where('status', '1')->get('fees_master')->result();
+        
+        if ($this->input->post()) {
+            $this->form_validation->set_rules('student_id', 'Student', 'required|integer');
+            $this->form_validation->set_rules('fee_id', 'Fee Type', 'required|integer');
+            $this->form_validation->set_rules('month_year', 'Month/Year', 'required');
+            $this->form_validation->set_rules('base_amount', 'Base Amount', 'required|decimal');
+            $this->form_validation->set_rules('due_date', 'Due Date', 'required');
+            
+            if ($this->form_validation->run()) {
+                // Extract month and year from month_year (format: YYYY-MM)
+                $month_year = $this->input->post('month_year');
+                $month_year_parts = explode('-', $month_year);
+                $bill_year = (int)$month_year_parts[0];
+                $bill_month = (int)$month_year_parts[1];
+
+                $fee_data = [
+                    'student_id' => $this->input->post('student_id'),
+                    'fee_id' => $this->input->post('fee_id'),
+                    'month_year' => $month_year,
+                    'bill_month' => $bill_month,
+                    'bill_year' => $bill_year,
+                    'due_date' => $this->input->post('due_date'),
+                    'base_amount' => $this->input->post('base_amount'),
+                    'payment_status' => 'Unpaid',
+                    'late_fee' => 0.00
+                ];
+
+                if ($this->Student_fee_model->create($fee_data)) {
+                    $this->session->set_flashdata('success', 'Fee created successfully');
+                    redirect('student-fees');
+                } else {
+                    $this->session->set_flashdata('error', 'Failed to create fee');
+                }
+            }
+        }
+        
+        $this->load->view('templates/header', $data);
+        $this->load->view('student_fees/create', $data);
+        $this->load->view('templates/footer');
+    }
+
+    // AJAX: Search student
+    public function search_student() {
+        $term = $this->input->get('term');
+        $students = $this->Student_model->search_students($term);
+        $data = [];
+
+        foreach ($students as $s) {
+            $data[] = [
+                'id' => $s->id,
+                'label' => $s->name . ' (' . $s->reg_no . ')',
+                'value' => $s->name . ' (' . $s->reg_no . ')'
+            ];
+        }
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    }
+    
+    // Edit fee
+    public function edit($id) {
+        $data['page_title'] = 'Edit Student Fee';
+        $data['fee'] = $this->Student_fee_model->get_by_id($id);
+        
+        if (!$data['fee']) {
+            $this->session->set_flashdata('error', 'Fee not found');
+            redirect('student-fees');
+        }
+        
+        $data['students'] = $this->Student_model->get_all(1000);
+        $data['fee_types'] = $this->db->where('status', '1')->get('fees_master')->result();
+        
+        if ($this->input->post()) {
+            $this->form_validation->set_rules('base_amount', 'Base Amount', 'required|decimal');
+            $this->form_validation->set_rules('due_date', 'Due Date', 'required');
+            
+            if ($this->form_validation->run()) {
+                $fee_data = [
+                    'base_amount' => $this->input->post('base_amount'),
+                    'due_date' => $this->input->post('due_date'),
+                    'late_fee' => $this->Student_fee_model->calculate_late_fee($this->input->post('due_date'))
+                ];
+                
+                if ($this->Student_fee_model->update($id, $fee_data)) {
+                    $this->session->set_flashdata('success', 'Fee updated successfully');
+                    redirect('student-fees/view/' . $id);
+                } else {
+                    $this->session->set_flashdata('error', 'Failed to update fee');
+                }
+            }
+        }
+        
+        $this->load->view('templates/header', $data);
+        $this->load->view('student_fees/edit', $data);
+        $this->load->view('templates/footer');
+    }
+    
+    // Delete fee
+    public function delete($id) {
+        $fee = $this->Student_fee_model->get_by_id($id);
+        
+        if (!$fee) {
+            $this->session->set_flashdata('error', 'Fee not found');
+            redirect('student-fees');
+        }
+        
+        // Check if there are payments
+        $payments = $this->Payment_model->get_by_student_fee($id);
+        if (!empty($payments)) {
+            $this->session->set_flashdata('error', 'Cannot delete fee with existing payments');
+            redirect('student-fees');
+        }
+        
+        if ($this->Student_fee_model->delete($id)) {
+            $this->session->set_flashdata('success', 'Fee deleted successfully');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to delete fee');
+        }
+        
+        redirect('student-fees');
+    }
+    
+    // Generate monthly fees for a student
+    public function generate_monthly_fees($student_id) {
+        $student = $this->Student_model->get_by_id($student_id);
+        
+        if (!$student) {
+            $this->session->set_flashdata('error', 'Student not found');
+            redirect('student-fees');
+        }
+        
+        if ($this->input->post()) {
+            $fee_id = $this->input->post('fee_id');
+            $months = $this->input->post('months') ?? 1;
+            
+            $generated = $this->Student_fee_model->generate_monthly_fees($student_id, $fee_id, $months);
+            
+            $this->session->set_flashdata('success', "$generated month(s) of fees generated successfully");
+            redirect('student-fees');
+        }
+        
+        $data['page_title'] = 'Generate Monthly Fees';
+        $data['student'] = $student;
+        $data['fee_types'] = $this->db->where('status', '1')->get('fees_master')->result();
+        
+        $this->load->view('templates/header', $data);
+        $this->load->view('student_fees/generate', $data);
+        $this->load->view('templates/footer');
+    }
+}
