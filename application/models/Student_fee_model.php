@@ -14,9 +14,157 @@ class Student_fee_model extends CI_Model {
     }
     
     /**
-     * Auto-generate monthly bills for all active students using BATCH INSERT
+     * IMPROVED: Generate monthly fees for all active students
+     * Should be run on the 1st of every month via cron job
+     * Generates bills for the CURRENT month with due date on the 20th
+     *
+     * @return array Detailed response with success status and statistics
+     */
+    public function generate_monthly_fees() {
+        $start_time = microtime(true);
+
+        // Generate for CURRENT month (running on 1st of month)
+        $current_month = (int)date('m');
+        $current_year = (int)date('Y');
+
+        log_message('info', "Monthly fee generation started for {$current_year}-{$current_month}");
+
+        // Get all active students
+        $students = $this->db->where('status', 1)->get('student')->result();
+
+        if (empty($students)) {
+            log_message('warning', 'No active students found for fee generation');
+            return [
+                'success' => false,
+                'message' => 'No active students found',
+                'generated' => 0,
+                'skipped' => 0,
+                'total_students' => 0,
+                'month' => $current_month,
+                'year' => $current_year,
+                'execution_time' => 0
+            ];
+        }
+
+        // Get monthly fee from fees_master (query by fee_type for flexibility)
+        $monthly_fee = $this->db
+            ->select('id, fee_amount')
+            ->where('fee_type', 'monthly')
+            ->where('status', 1)
+            ->get('fees_master')
+            ->row();
+
+        if (!$monthly_fee) {
+            log_message('error', 'Monthly fee not configured in fees_master table');
+            return [
+                'success' => false,
+                'message' => 'Monthly fee not configured in fees_master',
+                'generated' => 0,
+                'skipped' => 0,
+                'total_students' => count($students),
+                'month' => $current_month,
+                'year' => $current_year,
+                'execution_time' => 0
+            ];
+        }
+
+        // Check for existing bills to avoid duplicates
+        $existing_bills = $this->db
+            ->select('student_id')
+            ->where('bill_month', $current_month)
+            ->where('bill_year', $current_year)
+            ->where('fee_id', $monthly_fee->id)
+            ->where('status', '1')
+            ->get($this->table)
+            ->result_array();
+
+        $existing_student_ids = array_column($existing_bills, 'student_id');
+
+        // Prepare batch data
+        $batch_data = [];
+        $skipped = 0;
+        $current_timestamp = date('Y-m-d H:i:s');
+        $due_date = sprintf('%04d-%02d-20', $current_year, $current_month); // 20th of current month
+        $month_year = sprintf('%04d-%02d', $current_year, $current_month);
+
+        foreach ($students as $student) {
+            // Skip if bill already exists for this student
+            if (in_array($student->id, $existing_student_ids)) {
+                $skipped++;
+                log_message('debug', "Skipped student ID {$student->id} - bill already exists");
+                continue;
+            }
+
+            // Generate unique bill ID: YYYYMMSSSSSS format
+            $bill_unique_id = $this->generate_bill_unique_id($student->id, $current_month, $current_year);
+
+            $batch_data[] = [
+                'student_id' => $student->id,
+                'fee_id' => $monthly_fee->id,
+                'month_year' => $month_year,
+                'bill_month' => $current_month,
+                'bill_year' => $current_year,
+                'due_date' => $due_date,
+                'payment_status' => 'Unpaid',
+                'base_amount' => $monthly_fee->fee_amount,
+                'late_fee' => 0.00,
+                'total_amount' => $monthly_fee->fee_amount,
+                'status' => '1',
+                'created' => $current_timestamp,
+                'bill_unique_id' => $bill_unique_id,
+                'bank_transaction_id' => '',
+                'comments' => 'Auto-generated monthly bill'
+            ];
+        }
+
+        $generated = 0;
+
+        // Insert in batches of 100 records at a time for performance
+        if (!empty($batch_data)) {
+            $batch_size = 100;
+            $total_batches = ceil(count($batch_data) / $batch_size);
+
+            log_message('info', "Inserting {count($batch_data)} bills in {$total_batches} batches");
+
+            for ($i = 0; $i < $total_batches; $i++) {
+                $batch = array_slice($batch_data, $i * $batch_size, $batch_size);
+
+                if ($this->db->insert_batch($this->table, $batch)) {
+                    $generated += count($batch);
+                    log_message('debug', "Batch " . ($i + 1) . "/{$total_batches} inserted successfully");
+                } else {
+                    log_message('error', "Failed to insert batch " . ($i + 1) . "/{$total_batches}");
+                }
+            }
+        }
+
+        $execution_time = round(microtime(true) - $start_time, 2);
+        $month_name = date('F', mktime(0, 0, 0, $current_month, 1));
+
+        log_message('info', "Monthly fee generation completed: {$generated} generated, {$skipped} skipped in {$execution_time}s");
+
+        return [
+            'success' => true,
+            'message' => "Successfully generated {$generated} bills for {$month_name} {$current_year}",
+            'generated' => $generated,
+            'skipped' => $skipped,
+            'total_students' => count($students),
+            'month' => $current_month,
+            'year' => $current_year,
+            'month_name' => $month_name,
+            'due_date' => $due_date,
+            'batch_size' => 100,
+            'total_batches' => isset($total_batches) ? $total_batches : 0,
+            'execution_time' => $execution_time
+        ];
+    }
+
+    /**
+     * OLD METHOD: Auto-generate monthly bills for all active students using BATCH INSERT
      * Should be run on the 30th of every month via cron job
      * Generates bills for the NEXT month
+     *
+     * @deprecated Use generate_monthly_fees() instead
      */
 
     public function autoInsertMonthlyFees()
@@ -393,7 +541,7 @@ class Student_fee_model extends CI_Model {
         }
 
 
-        // Generate bill_unique_id if not provided
+
         if (!isset($data['bill_unique_id']) && isset($data['student_id'])) {
             $data['bill_unique_id'] = $this->generate_bill_unique_id(
                 $data['student_id'],

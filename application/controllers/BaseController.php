@@ -11,7 +11,7 @@ class BaseController extends Controller
     {
         parent::initController($request, $response, $logger);
 
-        // Run the monthly auto fee insert only on the 30th
+        // Run the monthly auto fee insert only on the 1st
         $this->autoInsertFeesIfNeeded();
     }
 
@@ -20,11 +20,11 @@ class BaseController extends Controller
         $today = date('d');
         log_message('debug', "Auto fee check triggered on day: $today");
 
-        if ($today == '30') {
-            log_message('debug', 'It is the 30th — running autoInsertMonthlyFees...');
+        if ($today == '01') {
+            log_message('info', 'It is the 1st — running generate_monthly_fees...');
             $feeModel = new \App\Models\Student_fee_model();
-            $result = $feeModel->autoInsertMonthlyFees();
-            log_message('debug', "Result: $result");
+            $result = $feeModel->generate_monthly_fees();
+            log_message('info', "Monthly fee generation result: " . json_encode($result));
         }
     }
 
