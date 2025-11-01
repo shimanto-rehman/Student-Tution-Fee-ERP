@@ -28,6 +28,7 @@ $route['student-fees/view/(:num)'] = 'student_fees/view/$1';
 $route['student-fees/edit/(:num)'] = 'student_fees/edit/$1';
 $route['student-fees/delete/(:num)'] = 'student_fees/delete/$1';
 $route['student-fees/generate/(:num)'] = 'student_fees/generate_monthly_fees/$1';
+$route['student-fees/generate-all'] = 'student_fees/generate_all_monthly_fees';
 $route['student-fees/search_student'] = 'student_fees/search_student';
 
 // Payments Routes

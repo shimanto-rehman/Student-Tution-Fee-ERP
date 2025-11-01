@@ -208,4 +208,46 @@ class Student_fees extends CI_Controller {
         $this->load->view('student_fees/generate', $data);
         $this->load->view('templates/footer');
     }
+
+    /**
+     * Generate monthly fees for ALL active students
+     * Can be triggered manually from the UI or automatically on the 1st
+     */
+    public function generate_all_monthly_fees() {
+        // Check if this is an AJAX request
+        $is_ajax = $this->input->is_ajax_request();
+
+        log_message('info', 'Manual monthly fee generation triggered by user');
+
+        // Execute the generation
+        $result = $this->Student_fee_model->generate_monthly_fees();
+
+        // Prepare response message
+        if ($result['success']) {
+            $message = "Monthly fees generated successfully! ";
+            $message .= "Generated: {$result['generated']} bills, ";
+            $message .= "Skipped: {$result['skipped']} (already exist), ";
+            $message .= "Total students: {$result['total_students']}";
+            $type = 'success';
+        } else {
+            $message = "Failed to generate monthly fees: {$result['message']}";
+            $type = 'error';
+        }
+
+        // Return response based on request type
+        if ($is_ajax) {
+            // AJAX request - return JSON
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'success' => $result['success'],
+                    'message' => $message,
+                    'data' => $result
+                ]));
+        } else {
+            // Regular request - set flash message and redirect
+            $this->session->set_flashdata($type, $message);
+            redirect('student-fees');
+        }
+    }
 }

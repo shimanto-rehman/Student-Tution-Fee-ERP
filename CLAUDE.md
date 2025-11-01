@@ -70,10 +70,28 @@ Status is automatically updated when payments are created.
 ## Important Business Logic
 
 ### Automatic Monthly Fee Generation
-- **Location:** `BaseController::autoInsertFeesIfNeeded()` (application/core/BaseController.php)
-- **Trigger:** Every request on the 30th of the month
-- **Implementation:** Uses `insert_batch()` for performance
-- Generates fees for all active students automatically
+The system generates monthly fees for all active students on the 1st of each month.
+
+**Automatic Execution (on user visits):**
+- **Location:** `AutoFeeHook::checkMonthlyFee()` (application/hooks/AutoFeeHook.php)
+- **Trigger:** Automatically runs when any user visits the site on the 1st
+- **Method:** `Student_fee_model::generate_monthly_fees()`
+- **Implementation:** Uses `insert_batch()` in chunks of 100 records for performance
+- **Bill Month:** Current month (e.g., Jan 1st → generates January bills)
+- **Due Date:** 20th of the current month
+- **Duplicate Prevention:** Automatically skips students who already have bills for the month
+
+**Manual Execution (via UI button):**
+- **Location:** Student Fees page header (green "Generate Monthly Fees" button)
+- **Route:** `/student-fees/generate-all`
+- **Controller:** `Student_fees::generate_all_monthly_fees()`
+- **Features:**
+  - Confirmation modal before generation
+  - Shows current month/year being generated
+  - AJAX-based with loading spinner
+  - Displays success statistics (generated, skipped, total)
+  - Always visible for admin convenience
+- **Use Cases:** Manual triggering for testing, missed auto-runs, or regeneration
 
 ### Late Fee Calculation
 - **Method:** `Student_fee_model::update_all_late_fees()`
@@ -99,7 +117,7 @@ Status is automatically updated when payments are created.
 
 ### Routes Structure
 - Dashboard: `/` (default controller)
-- Student Fees: `/student-fees`, `/student-fees/create`, `/student-fees/edit/{id}`
+- Student Fees: `/student-fees`, `/student-fees/create`, `/student-fees/edit/{id}`, `/student-fees/generate-all`
 - Payments: `/payments`, `/payments/create/{fee_id}`, `/payments/process/{fee_id}`
 - API: `/api/mtb/*`
 
@@ -109,7 +127,7 @@ Status is automatically updated when payments are created.
 Models use database transactions for critical operations:
 - Payment creation automatically updates fee status
 - Monthly fee generation uses batch inserts
-- Check `Payment_model::create()` and `Student_fee_model::autoInsertMonthlyFees()` for examples
+- Check `Payment_model::create()` and `Student_fee_model::generate_monthly_fees()` for examples
 
 ### Balance Calculation
 ```php
@@ -171,9 +189,10 @@ if ($this->db->trans_status() === FALSE) {
 ## Working with Dates
 
 The system heavily uses month/year for fee tracking:
-- Fees are generated monthly (30th of each month)
+- Fees are generated monthly (automatically on 1st when users visit, or manually via button)
 - Date format: `Y-m-d` (MySQL standard)
 - Month/year stored separately in `student_fees` table for easier querying
+- Bills generated on the 1st are for the current month with due date on the 20th
 
 ## Security Notes
 
