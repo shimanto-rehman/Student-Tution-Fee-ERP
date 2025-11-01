@@ -1,26 +1,30 @@
-<!-- application/views/payments/index.php -->
 <div class="row mb-4">
     <div class="col-md-6">
-        <h2><i class="bi bi-credit-card"></i> Payment Records</h2>
+        <h2 class="page-title" style="color: var(--primary);">
+            <div class="icon-wrapper">
+                <i class="bi bi-credit-card text-primary"></i>
+            </div>
+            Payment Records
+        </h2>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="col-md-6 text-md-end">
         <a href="<?= base_url('student-fees') ?>" class="btn btn-primary">
-            <i class="bi bi-receipt"></i> View Fees
+            <i class="bi bi-receipt me-2"></i> View Fees
         </a>
     </div>
 </div>
 
 <!-- Summary Cards -->
 <div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
+    <div class="col-md-4 mb-3">
+        <div class="card summary-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-2">Total Payments</h6>
-                        <h3 class="mb-0"><?= count($payments) ?></h3>
+                        <h3 class="mb-0 text-primary"><?= count($payments) ?></h3>
                     </div>
-                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                    <div class="summary-icon bg-opacity-10">
                         <i class="bi bi-receipt-cutoff fs-2 text-primary"></i>
                     </div>
                 </div>
@@ -28,8 +32,8 @@
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
+    <div class="col-md-4 mb-3">
+        <div class="card summary-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -38,7 +42,7 @@
                             ৳<?= number_format(array_sum(array_column($payments, 'amount_paid')), 2) ?>
                         </h3>
                     </div>
-                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                    <div class="summary-icon bg-opacity-10">
                         <i class="bi bi-cash-stack fs-2 text-success"></i>
                     </div>
                 </div>
@@ -46,8 +50,8 @@
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
+    <div class="col-md-4 mb-3">
+        <div class="card summary-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -61,7 +65,7 @@
                             ?>
                         </h3>
                     </div>
-                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                    <div class="summary-icon bg-opacity-10">
                         <i class="bi bi-calendar-check fs-2 text-info"></i>
                     </div>
                 </div>
@@ -82,7 +86,7 @@
             <div class="col-md-2">
                 <label class="form-label">Payment Mode</label>
                 <select name="mode" class="form-select">
-                    <option value="">All</option>
+                    <option value="">All Modes</option>
                     <option value="cash" <?= $this->input->get('mode') === 'cash' ? 'selected' : '' ?>>Cash</option>
                     <option value="bank" <?= $this->input->get('mode') === 'bank' ? 'selected' : '' ?>>Bank</option>
                     <option value="online" <?= $this->input->get('mode') === 'online' ? 'selected' : '' ?>>Online</option>
@@ -99,11 +103,11 @@
             <div class="col-md-3">
                 <label class="form-label">&nbsp;</label>
                 <div class="d-grid gap-2 d-md-flex">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i> Filter
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search me-2"></i> Filter
                     </button>
-                    <a href="<?= base_url('payments') ?>" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Clear
+                    <a href="<?= base_url('payments') ?>" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i> Clear
                     </a>
                 </div>
             </div>
@@ -134,10 +138,10 @@
                     <?php if (!empty($payments)): ?>
                         <?php foreach ($payments as $payment): ?>
                             <tr>
-                                <td><?= $payment->id ?></td>
+                                <td><strong>#<?= $payment->id ?></strong></td>
                                 <td><?= date('d M Y', strtotime($payment->payment_date)) ?></td>
                                 <td><?= $payment->name ?></td>
-                                <td><?= $payment->reg_no ?></td>
+                                <td><code><?= $payment->reg_no ?></code></td>
                                 <td><?= date('M Y', strtotime($payment->month_year . '-01')) ?></td>
                                 <td class="text-success fw-bold">৳<?= number_format($payment->amount_paid, 2) ?></td>
                                 <td>
@@ -162,23 +166,26 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <a href="<?= base_url('payments/receipt/' . $payment->id) ?>" 
-                                       class="btn btn-sm btn-success" title="View Receipt">
-                                        <i class="bi bi-receipt"></i>
-                                    </a>
-                                    <a href="<?= base_url('student-fees/view/' . $payment->student_fee_id) ?>" 
-                                       class="btn btn-sm btn-info" title="View Fee">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="<?= base_url('payments/receipt/' . $payment->id) ?>" 
+                                           class="btn btn-success" title="View Receipt">
+                                            <i class="bi bi-receipt"></i>
+                                        </a>
+                                        <a href="<?= base_url('student-fees/view/' . $payment->student_fee_id) ?>" 
+                                           class="btn btn-info" title="View Fee">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="10" class="text-center py-4">
+                            <td colspan="10" class="text-center py-5">
                                 <div class="text-muted">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                    <p class="mb-0">No payment records found</p>
+                                    <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                                    <h5>No payment records found</h5>
+                                    <p class="mb-0">Try adjusting your filters or create new payments</p>
                                 </div>
                             </td>
                         </tr>
@@ -189,16 +196,16 @@
         
         <!-- Pagination -->
         <?php if (!empty($payments) && count($payments) >= $limit): ?>
-            <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="d-flex justify-content-between align-items-center mt-4">
                 <div class="text-muted">
-                    Showing <?= $offset + 1 ?> to <?= min($offset + $limit, $offset + count($payments)) ?>
+                    Showing <?= $offset + 1 ?> to <?= min($offset + $limit, $offset + count($payments)) ?> of <?= count($payments) ?> entries
                 </div>
                 <nav>
                     <ul class="pagination mb-0">
                         <?php if ($offset > 0): ?>
                             <li class="page-item">
                                 <a class="page-link" href="<?= base_url('payments?offset=' . max(0, $offset - $limit)) ?>">
-                                    Previous
+                                    <i class="bi bi-chevron-left me-1"></i> Previous
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -206,7 +213,7 @@
                         <?php if (count($payments) >= $limit): ?>
                             <li class="page-item">
                                 <a class="page-link" href="<?= base_url('payments?offset=' . ($offset + $limit)) ?>">
-                                    Next
+                                    Next <i class="bi bi-chevron-right ms-1"></i>
                                 </a>
                             </li>
                         <?php endif; ?>
@@ -218,20 +225,20 @@
 </div>
 
 <!-- Export Options -->
-<div class="card mt-4">
+<div class="card mt-4 export-section">
     <div class="card-body">
         <h5 class="card-title mb-3">
-            <i class="bi bi-download"></i> Export Options
+            <i class="bi bi-download me-2"></i>Export Options
         </h5>
         <div class="btn-group" role="group">
             <button type="button" class="btn btn-outline-success" onclick="exportToCSV()">
-                <i class="bi bi-file-earmark-spreadsheet"></i> Export to CSV
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i> Export to CSV
             </button>
             <button type="button" class="btn btn-outline-primary" onclick="exportToPDF()">
-                <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                <i class="bi bi-file-earmark-pdf me-2"></i> Export to PDF
             </button>
             <button type="button" class="btn btn-outline-info" onclick="window.print()">
-                <i class="bi bi-printer"></i> Print
+                <i class="bi bi-printer me-2"></i> Print
             </button>
         </div>
     </div>
@@ -270,6 +277,7 @@ function exportToPDF() {
 </script>
 
 <style media="print">
-    .btn, .card-header, .pagination, .export-options { display: none; }
+    .btn, .card-header, .pagination, .export-section { display: none; }
     .table { font-size: 12px; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; }
 </style>

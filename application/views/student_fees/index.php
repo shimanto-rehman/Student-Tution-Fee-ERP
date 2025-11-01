@@ -1,19 +1,24 @@
 <div class="row mb-4">
     <div class="col-md-6">
-        <h2><i class="bi bi-receipt-cutoff"></i> Student Fees Management</h2>
+        <h2 class="page-title" style="color: var(--primary);">
+            <div class="icon-wrapper">
+                <i class="bi bi-receipt-cutoff text-primary"></i>
+            </div>
+            Student Fees Management
+        </h2>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="col-md-6 text-md-end">
         <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#generateFeesModal">
-            <i class="bi bi-calendar-check"></i> Generate Monthly Fees
+            <i class="bi bi-calendar-check me-2"></i> Generate Monthly Fees
         </button>
         <a href="<?= base_url('student-fees/create') ?>" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Add New Fee
+            <i class="bi bi-plus-circle me-2"></i> Add New Fee
         </a>
     </div>
 </div>
 
 <!-- Search and Filter Section -->
-<div class="card mb-3">
+<div class="card mb-4">
     <div class="card-body">
         <form method="get" action="<?= base_url('student-fees') ?>" id="filterForm">
             <div class="row g-3">
@@ -49,11 +54,11 @@
                 <div class="col-md-3">
                     <label class="form-label">&nbsp;</label>
                     <div class="d-grid gap-2 d-md-flex">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Filter
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search me-2"></i> Filter
                         </button>
                         <a href="<?= base_url('student-fees') ?>" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Clear
+                            <i class="bi bi-x-circle me-2"></i> Clear
                         </a>
                     </div>
                 </div>
@@ -68,7 +73,10 @@ $has_filters = $this->input->get('search') || $this->input->get('status') || $th
 if ($has_filters): 
 ?>
 <div class="alert alert-warning alert-dismissible fade show">
-    <strong><i class="bi bi-funnel"></i> Active Filters:</strong>
+    <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-funnel me-2"></i>
+        <strong>Active Filters:</strong>
+    </div>
     <ul class="mb-0 mt-2">
         <?php if ($this->input->get('search')): ?>
             <li>Search: <strong><?= htmlspecialchars($this->input->get('search')) ?></strong></li>
@@ -81,7 +89,7 @@ if ($has_filters):
         <?php endif; ?>
     </ul>
     <a href="<?= base_url('student-fees') ?>" class="btn btn-sm btn-secondary mt-2">
-        <i class="bi bi-x-circle"></i> Clear All Filters
+        <i class="bi bi-x-circle me-2"></i> Clear All Filters
     </a>
 </div>
 <?php endif; ?>
@@ -89,16 +97,24 @@ if ($has_filters):
 <!-- Results Summary -->
 <?php if ($total_rows > 0): ?>
 <div class="alert alert-info">
-    <i class="bi bi-info-circle"></i>
-    Showing <?= $offset + 1 ?> to <?= min($offset + $per_page, $total_rows) ?> of <?= $total_rows ?> entries
-    <?php if ($has_filters): ?>
-        (filtered results)
-    <?php endif; ?>
+    <div class="d-flex align-items-center">
+        <i class="bi bi-info-circle me-2"></i>
+        <div>
+            Showing <?= $offset + 1 ?> to <?= min($offset + $per_page, $total_rows) ?> of <?= $total_rows ?> entries
+            <?php if ($has_filters): ?>
+                (filtered results)
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
 <?php elseif ($has_filters): ?>
 <div class="alert alert-warning">
-    <i class="bi bi-exclamation-triangle"></i>
-    No results found for your search criteria. <a href="<?= base_url('student-fees') ?>">Clear filters</a> to see all records.
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <div>
+            No results found for your search criteria. <a href="<?= base_url('student-fees') ?>" class="alert-link">Clear filters</a> to see all records.
+        </div>
+    </div>
 </div>
 <?php endif; ?>
 
@@ -124,41 +140,47 @@ if ($has_filters):
                     <?php if (!empty($fees)): ?>
                         <?php foreach ($fees as $fee): ?>
                             <tr>
-                                <td><?= $fee->id ?></td>
+                                <td><strong>#<?= $fee->id ?></strong></td>
                                 <td><?= $fee->name ?></td>
-                                <td><?= $fee->reg_no ?></td>
+                                <td><code><?= $fee->reg_no ?></code></td>
                                 <td><?= date('M Y', strtotime($fee->month_year . '-01')) ?></td>
                                 <td><?= date('d M Y', strtotime($fee->due_date)) ?></td>
-                                <td>৳<?= number_format($fee->base_amount, 2) ?></td>
+                                <td><strong>৳<?= number_format($fee->base_amount, 2) ?></strong></td>
                                 <td class="<?= $fee->late_fee > 0 ? 'text-danger fw-bold' : '' ?>">
                                     ৳<?= number_format($fee->late_fee, 2) ?>
                                 </td>
-                                <td>৳<?= number_format($fee->total_amount, 2) ?></td>
+                                <td><strong class="text-primary">৳<?= number_format($fee->total_amount, 2) ?></strong></td>
                                 <td>
                                     <?php if ($fee->payment_status === 'Paid'): ?>
-                                        <span class="badge badge-paid">Paid</span>
+                                        <span class="badge-paid">Paid</span>
                                     <?php elseif ($fee->payment_status === 'Partial'): ?>
-                                        <span class="badge badge-partial">Partial</span>
+                                        <span class="badge-partial">Partial</span>
                                     <?php else: ?>
-                                        <span class="badge badge-unpaid">Unpaid</span>
+                                        <span class="badge-unpaid">Unpaid</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <a href="<?= base_url('student-fees/view/' . $fee->id) ?>" class="btn btn-sm btn-info" title="View">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="<?= base_url('payments/create/' . $fee->id) ?>" class="btn btn-sm btn-success" title="Make Payment">
-                                        <i class="bi bi-credit-card"></i>
-                                    </a>
-                                    <a href="<?= base_url('student-fees/edit/' . $fee->id) ?>" class="btn btn-sm btn-warning" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="<?= base_url('student-fees/view/' . $fee->id) ?>" class="btn btn-info" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="<?= base_url('payments/create/' . $fee->id) ?>" class="btn btn-success" title="Make Payment">
+                                            <i class="bi bi-credit-card"></i>
+                                        </a>
+                                        <a href="<?= base_url('student-fees/edit/' . $fee->id) ?>" class="btn btn-warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="10" class="text-center">No fees found</td>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="bi bi-receipt display-4 text-muted d-block mb-3"></i>
+                                <h5 class="text-muted">No fees found</h5>
+                                <p class="text-muted">Try adjusting your filters or add new fees</p>
+                            </td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -167,8 +189,8 @@ if ($has_filters):
 
         <!-- Pagination -->
         <?php if ($total_rows > $per_page): ?>
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <div>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="text-muted">
                 Showing <?= $offset + 1 ?> to <?= min($offset + $per_page, $total_rows) ?> of <?= $total_rows ?> entries
             </div>
             <nav>
@@ -187,11 +209,13 @@ if ($has_filters):
                     if ($current_page > 1):
                     ?>
                         <li class="page-item">
-                            <a class="page-link" href="?offset=<?= ($current_page - 2) * $per_page . $query_string ?>">Previous</a>
+                            <a class="page-link" href="?offset=<?= ($current_page - 2) * $per_page . $query_string ?>">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
                         </li>
                     <?php else: ?>
                         <li class="page-item disabled">
-                            <span class="page-link">Previous</span>
+                            <span class="page-link"><i class="bi bi-chevron-left"></i> Previous</span>
                         </li>
                     <?php endif; ?>
                     
@@ -218,11 +242,13 @@ if ($has_filters):
                     <!-- Next button -->
                     <?php if ($current_page < $total_pages): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?offset=<?= $current_page * $per_page . $query_string ?>">Next</a>
+                            <a class="page-link" href="?offset=<?= $current_page * $per_page . $query_string ?>">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
                         </li>
                     <?php else: ?>
                         <li class="page-item disabled">
-                            <span class="page-link">Next</span>
+                            <span class="page-link">Next <i class="bi bi-chevron-right"></i></span>
                         </li>
                     <?php endif; ?>
                 </ul>
@@ -238,14 +264,16 @@ if ($has_filters):
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="generateFeesModalLabel">
-                    <i class="bi bi-calendar-check"></i> Generate Monthly Fees
+                    <i class="bi bi-calendar-check me-2"></i> Generate Monthly Fees
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    <strong>Select month and year to generate fees</strong>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Select month and year to generate fees</strong>
+                    </div>
                 </div>
 
                 <form id="generateFeesForm">
@@ -288,7 +316,10 @@ if ($has_filters):
                     </div>
 
                     <div class="alert alert-warning">
-                        <strong>Note:</strong>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong>
+                        </div>
                         <ul class="mb-0 mt-2">
                             <li>Bills will be created for students who don't have a bill for this month</li>
                             <li>Students who already have a bill will be skipped (no duplicates)</li>
@@ -303,11 +334,11 @@ if ($has_filters):
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Cancel
+                    <i class="bi bi-x-circle me-2"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-success" id="confirmGenerateBtn">
                     <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="generateSpinner"></span>
-                    <i class="bi bi-check-circle" id="generateIcon"></i>
+                    <i class="bi bi-check-circle me-2" id="generateIcon"></i>
                     <span id="generateBtnText">Yes, Generate Fees</span>
                 </button>
             </div>
@@ -403,8 +434,10 @@ document.getElementById('confirmGenerateBtn').addEventListener('click', function
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${data.success ? 'success' : 'danger'} alert-dismissible fade show`;
         alertDiv.innerHTML = `
-            <i class="bi bi-${data.success ? 'check-circle' : 'exclamation-triangle'}"></i>
-            ${data.message}
+            <div class="d-flex align-items-center">
+                <i class="bi bi-${data.success ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${data.message}
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         
@@ -430,8 +463,10 @@ document.getElementById('confirmGenerateBtn').addEventListener('click', function
         const alertDiv = document.createElement('div');
         alertDiv.className = 'alert alert-danger alert-dismissible fade show';
         alertDiv.innerHTML = `
-            <i class="bi bi-exclamation-triangle"></i>
-            An error occurred while generating fees. Please try again.
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                An error occurred while generating fees. Please try again.
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         

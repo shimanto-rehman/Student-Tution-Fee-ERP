@@ -42,3 +42,7 @@ $route['payments/initiate-mtb-payment'] = 'payments/initiate_mtb_payment';
 $route['api/mtb/billing-info'] = 'api/mtb_gateway/get_billing_info';
 $route['api/mtb/payment-callback'] = 'api/mtb_gateway/payment_callback';
 $route['api/mtb/payment-status/(:any)'] = 'api/mtb_gateway/check_payment_status/$1';
+
+// Due Bills API Routes
+$route['api/due-bills/check'] = 'api/due_bills/check';
+$route['api/due-bills/get'] = 'api/due_bills/get';

@@ -3,53 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $page_title ?? 'Student Payment System' ?> - Pioneer Dental College</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-        }
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-        }
-        .badge-paid {
-            background-color: var(--success-color);
-        }
-        .badge-unpaid {
-            background-color: var(--danger-color);
-        }
-        .badge-partial {
-            background-color: var(--warning-color);
-        }
-        .late-fee-alert {
-            background-color: #fff3cd;
-            border-left: 4px solid var(--warning-color);
-        }
-    </style>
+    <title><?= $page_title ?? 'Student Payment System' ?> 🏥 Pioneer Dental College</title>
+    <!-- Bootstrap CSS -->
+    <link href="<?= base_url('assets/bootstrap.min.css') ?>" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="<?= base_url('assets/bootstrap-icons.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/style.css') ?>" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container-fluid">
+        <div class="container">
             <a class="navbar-brand" href="<?= base_url() ?>">
                 <i class="bi bi-building"></i> Pioneer Dental College
             </a>
@@ -59,16 +22,19 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('student-fees') ?>">
+                        <a class="nav-link <?= current_url() == base_url('student-fees') ? 'active' : '' ?>" href="<?= base_url('student-fees') ?>">
                             <i class="bi bi-receipt"></i> Student Fees
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('payments') ?>">
+                        <a class="nav-link <?= strpos(current_url(), 'payments') !== false ? 'active' : '' ?>" href="<?= base_url('payments') ?>">
                             <i class="bi bi-credit-card"></i> Payments
                         </a>
                     </li>
                 </ul>
+                <div class="navbar-text">
+                    <small class="text-light opacity-75">Student Payment System</small>
+                </div>
             </div>
         </div>
     </nav>
@@ -76,21 +42,40 @@
     <div class="container">
         <?php if ($this->session->flashdata('success')): ?>
             <div class="alert alert-success alert-dismissible fade show">
-                <i class="bi bi-check-circle"></i> <?= $this->session->flashdata('success') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                    <div class="flex-grow-1"><?= $this->session->flashdata('success') ?></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         <?php endif; ?>
         
         <?php if ($this->session->flashdata('error')): ?>
             <div class="alert alert-danger alert-dismissible fade show">
-                <i class="bi bi-exclamation-triangle"></i> <?= $this->session->flashdata('error') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div class="flex-grow-1"><?= $this->session->flashdata('error') ?></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         <?php endif; ?>
         
         <?php if ($this->session->flashdata('info')): ?>
             <div class="alert alert-info alert-dismissible fade show">
-                <i class="bi bi-info-circle"></i> <?= $this->session->flashdata('info') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                    <div class="flex-grow-1"><?= $this->session->flashdata('info') ?></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($this->session->flashdata('warning')): ?>
+            <div class="alert alert-warning alert-dismissible fade show">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+                    <div class="flex-grow-1"><?= $this->session->flashdata('warning') ?></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         <?php endif; ?>

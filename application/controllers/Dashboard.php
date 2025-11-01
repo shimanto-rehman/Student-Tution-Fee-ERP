@@ -18,21 +18,27 @@ class Dashboard extends CI_Controller {
         $this->Student_fee_model->update_all_late_fees();
         
         // Get statistics
-        $data['total_students'] = $this->db->count_all('student');
-        $data['total_fees'] = $this->db->count_all('student_fees');
+        // Student table uses status=1 for active records
+        $this->db->where('status', 1);
+        $data['total_students'] = $this->db->count_all_results('student');
+        
+        // Student_fees uses status='0' for active records
+        $this->db->where('status', '0');
+        $data['total_fees'] = $this->db->count_all_results('student_fees');
         
         // Count unpaid, paid, and partial fees
-        $data['unpaid_fees'] = $this->db->where('payment_status', 'Unpaid')
-                                        ->where('status', '1')
-                                        ->count_all_results('student_fees');
+        // Note: student_fees uses status='0' for active records
+        $this->db->where('payment_status', 'Unpaid');
+        $this->db->where('status', '0');
+        $data['unpaid_fees'] = $this->db->count_all_results('student_fees');
         
-        $data['paid_fees'] = $this->db->where('payment_status', 'Paid')
-                                      ->where('status', '1')
-                                      ->count_all_results('student_fees');
+        $this->db->where('payment_status', 'Paid');
+        $this->db->where('status', '0');
+        $data['paid_fees'] = $this->db->count_all_results('student_fees');
         
-        $data['partial_fees'] = $this->db->where('payment_status', 'Partial')
-                                         ->where('status', '1')
-                                         ->count_all_results('student_fees');
+        $this->db->where('payment_status', 'Partial');
+        $this->db->where('status', '0');
+        $data['partial_fees'] = $this->db->count_all_results('student_fees');
         
         // Total revenue (all paid amounts)
         $revenue_query = $this->db->select_sum('amount_paid')
@@ -41,10 +47,11 @@ class Dashboard extends CI_Controller {
         $data['total_revenue'] = $revenue_query->row()->amount_paid ?? 0;
         
         // Outstanding amount (unpaid + partial)
-        $outstanding_query = $this->db->select('SUM(total_amount) as outstanding')
-                                      ->where_in('payment_status', ['Unpaid', 'Partial'])
-                                      ->where('status', '1')
-                                      ->get('student_fees');
+        // Note: student_fees uses status='0' for active records
+        $this->db->select('SUM(total_amount) as outstanding');
+        $this->db->where_in('payment_status', ['Unpaid', 'Partial']);
+        $this->db->where('status', '0');
+        $outstanding_query = $this->db->get('student_fees');
         $total_outstanding = $outstanding_query->row()->outstanding ?? 0;
         
         // Subtract already paid amounts for partial payments
@@ -76,10 +83,11 @@ class Dashboard extends CI_Controller {
         $data['monthly_collections'] = $this->get_monthly_collections(6);
         
         // Overdue fees count
-        $data['overdue_fees'] = $this->db->where('payment_status !=', 'Paid')
-                                         ->where('due_date <', date('Y-m-d'))
-                                         ->where('status', '1')
-                                         ->count_all_results('student_fees');
+        // Note: student_fees uses status='0' for active records
+        $this->db->where('payment_status !=', 'Paid');
+        $this->db->where('due_date <', date('Y-m-d'));
+        $this->db->where('status', '0');
+        $data['overdue_fees'] = $this->db->count_all_results('student_fees');
         
         // Load views
         $this->load->view('templates/header', $data);

@@ -19,6 +19,9 @@ class Student_fee_model extends CI_Model {
         $this->db->from($this->table);
         $this->db->join('student', 'student.id = student_fees.student_id', 'left');
         
+        // Filter for active records only (status='0')
+        $this->db->where('student_fees.status', '0');
+        
         // Apply filters
         $this->apply_filters($filters);
         
@@ -44,6 +47,9 @@ class Student_fee_model extends CI_Model {
     public function count_all($filters = []) {
         $this->db->from($this->table);
         $this->db->join('student', 'student.id = student_fees.student_id', 'left');
+        
+        // Filter for active records only (status='0')
+        $this->db->where('student_fees.status', '0');
         
         // Apply filters
         $this->apply_filters($filters);
@@ -94,10 +100,13 @@ class Student_fee_model extends CI_Model {
             student.name,
             student.reg_no,
             student.phone,
+            student.address,
+            fees_master.fee_name,
             (student_fees.base_amount + student_fees.late_fee) as total_amount
         ');
         $this->db->from($this->table);
         $this->db->join('student', 'student.id = student_fees.student_id', 'left');
+        $this->db->join('fees_master', 'fees_master.id = student_fees.fee_id', 'left');
         $this->db->where('student_fees.id', $id);
         
         return $this->db->get()->row();
@@ -181,6 +190,21 @@ class Student_fee_model extends CI_Model {
         
         log_message('info', "Generating fees for: {$month_year}, Due Date: {$due_date}");
         
+        // Get monthly fee amount from fees_master table (id=2, fee_type='monthly')
+        $this->db->select('fee_amount');
+        $this->db->where('id', 2);
+        $this->db->where('fee_type', 'monthly');
+        $fees_master_query = $this->db->get('fees_master');
+        
+        $default_monthly_fee = 1000; // Fallback default
+        if ($fees_master_query->num_rows() > 0) {
+            $fees_master = $fees_master_query->row();
+            $default_monthly_fee = floatval($fees_master->fee_amount);
+            log_message('info', "Monthly fee from fees_master: {$default_monthly_fee}");
+        } else {
+            log_message('warning', "Monthly fee not found in fees_master, using default: {$default_monthly_fee}");
+        }
+        
         // Get all active students
         $this->db->where('status', 1);
         $students = $this->db->get('student')->result();
@@ -207,15 +231,13 @@ class Student_fee_model extends CI_Model {
                 continue;
             }
             
-            // Get student's default fee amount (from fees_master or student record)
-            $fee_amount = isset($student->monthly_fee) && $student->monthly_fee > 0 
-                ? $student->monthly_fee 
-                : 1000; // Default to 1000 if not set
+            // Use monthly fee amount from fees_master (id=2, fee_type='monthly')
+            $fee_amount = $default_monthly_fee;
             
             // Create fee record
             $fee_data = [
                 'student_id' => $student->id,
-                'fee_id' => 1, // Default fee type, adjust as needed
+                'fee_id' => 2, // Monthly fee from fees_master
                 'month_year' => $month_year,
                 'bill_month' => $month,
                 'bill_year' => $year,

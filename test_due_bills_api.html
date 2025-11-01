@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Due Bills API Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-get {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-get:hover {
+            background: #45a049;
+        }
+        .btn-post {
+            background: #2196F3;
+            color: white;
+        }
+        .btn-post:hover {
+            background: #0b7dda;
+        }
+        .response {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+        .error {
+            color: #e74c3c;
+            padding: 15px;
+            background: #ffeaea;
+            border-left: 4px solid #e74c3c;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #27ae60;
+            padding: 15px;
+            background: #eafff1;
+            border-left: 4px solid #27ae60;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .sample-data {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .sample-data strong {
+            color: #856404;
+        }
+        .sample-data ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        .sample-data li {
+            margin: 5px 0;
+        }
+        .sample-data code {
+            background: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Due Bills API Tester</h1>
+        <p class="subtitle">Test the Pioneer Dental Due Bills API endpoint</p>
+        
+        <div class="sample-data">
+            <strong>📋 Sample Test Data:</strong>
+            <ul>
+                <li><strong>Student ID:</strong> <code>1</code>, <strong>Phone:</strong> <code>01708086211</code> (Promit Saha)</li>
+                <li><strong>Student ID:</strong> <code>2</code>, <strong>Phone:</strong> <code>01629830303</code> (Sakiba Islam)</li>
+                <li><strong>Student ID:</strong> <code>3</code>, <strong>Phone:</strong> <code>01975650052</code> (Israt Jahan Tumpa)</li>
+            </ul>
+        </div>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label for="studentId">Student ID:</label>
+                <input type="number" id="studentId" name="studentId" placeholder="Enter Student ID" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" name="phone" placeholder="Enter Phone Number" value="01708086211" required>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn-get" onclick="testAPI('GET')">
+                    🌐 Test GET Method
+                </button>
+                <button type="button" class="btn-post" onclick="testAPI('POST')">
+                    📤 Test POST Method
+                </button>
+            </div>
+        </form>
+
+        <div id="responseContainer" style="display: none;">
+            <div class="response-title">📦 API Response:</div>
+            <div class="response">
+                <pre id="responseContent"></pre>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" style="display: none;">
+            <div class="loading">
+                ⏳ Loading...
+            </div>
+        </div>
+
+        <div id="errorMessage"></div>
+        <div id="successMessage"></div>
+    </div>
+
+    <script>
+        // Update base URL based on your installation
+        const baseURL = window.location.origin + '/pioneer-dental';
+
+        async function testAPI(method) {
+            const studentId = document.getElementById('studentId').value;
+            const phone = document.getElementById('phone').value;
+
+            // Clear previous messages
+            document.getElementById('errorMessage').innerHTML = '';
+            document.getElementById('successMessage').innerHTML = '';
+            document.getElementById('responseContainer').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'block';
+
+            try {
+                let url, options;
+
+                if (method === 'GET') {
+                    url = `${baseURL}/api/due-bills/get?student_id=${studentId}&phone=${phone}`;
+                    options = {
+                        method: 'GET'
+                    };
+                } else {
+                    url = `${baseURL}/api/due-bills/check`;
+                    options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            student_id: parseInt(studentId),
+                            phone: phone
+                        })
+                    };
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                // Hide loading
+                document.getElementById('loadingIndicator').style.display = 'none';
+
+                // Show response
+                document.getElementById('responseContainer').style.display = 'block';
+                document.getElementById('responseContent').textContent = JSON.stringify(data, null, 2);
+
+                // Show status message
+                if (response.ok && data.status === 'success') {
+                    document.getElementById('successMessage').innerHTML = 
+                        `<div class="success">✅ API call successful!</div>`;
+                } else {
+                    document.getElementById('errorMessage').innerHTML = 
+                        `<div class="error">❌ Error: ${data.message || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('errorMessage').innerHTML = 
+                    `<div class="error">❌ Network error: ${error.message}</div>`;
+                console.error('Error:', error);
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            testAPI('GET');
+        });
+    </script>
+</body>
+</html>
+
