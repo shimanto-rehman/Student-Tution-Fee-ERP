@@ -13,20 +13,47 @@ class Student_fees extends CI_Controller {
         $this->load->library(['form_validation', 'session']);
     }
     
-    // List all student fees
+    // List all student fees with pagination and search
     public function index() {
         $data['page_title'] = 'Student Fees Management';
         
         // Update late fees before displaying
         $this->Student_fee_model->update_all_late_fees();
         
-        // Pagination
-        $limit = 50;
-        $offset = $this->input->get('offset') ?? 0;
+        // Get filter parameters
+        $search = $this->input->get('search');
+        $status = $this->input->get('status');
+        $month_year = $this->input->get('month_year');
+        $per_page = $this->input->get('per_page') ? (int)$this->input->get('per_page') : 50;
+        $offset = $this->input->get('offset') ? (int)$this->input->get('offset') : 0;
         
-        $data['fees'] = $this->Student_fee_model->get_all($limit, $offset);
+        // Build filters array - only add non-empty values
+        $filters = [];
+        if (!empty($search) && trim($search) !== '') {
+            $filters['search'] = trim($search);
+        }
+        if (!empty($status) && trim($status) !== '') {
+            $filters['status'] = $status;
+        }
+        if (!empty($month_year) && trim($month_year) !== '') {
+            $filters['month_year'] = $month_year;
+        }
+        
+        // Debug: Log filter parameters
+        log_message('debug', 'Filter Parameters: ' . json_encode($filters));
+        log_message('debug', 'Per Page: ' . $per_page . ', Offset: ' . $offset);
+        
+        // Get total count for pagination
+        $data['total_rows'] = $this->Student_fee_model->count_all($filters);
+        
+        // Get fees with filters and pagination
+        $data['fees'] = $this->Student_fee_model->get_all($per_page, $offset, $filters);
         $data['offset'] = $offset;
-        $data['limit'] = $limit;
+        $data['per_page'] = $per_page;
+        
+        // Debug: Log results
+        log_message('debug', 'Total Rows: ' . $data['total_rows']);
+        log_message('debug', 'Fees Retrieved: ' . count($data['fees']));
         
         $this->load->view('templates/header', $data);
         $this->load->view('student_fees/index', $data);
@@ -219,12 +246,38 @@ class Student_fees extends CI_Controller {
 
         log_message('info', 'Manual monthly fee generation triggered by user');
 
-        // Execute the generation
-        $result = $this->Student_fee_model->generate_monthly_fees();
+        // Get POST data (month, year, due_day)
+        $post_data = json_decode($this->input->raw_input_stream, true);
+        
+        $month = isset($post_data['month']) ? (int)$post_data['month'] : date('n');
+        $year = isset($post_data['year']) ? (int)$post_data['year'] : date('Y');
+        $due_day = isset($post_data['due_day']) ? (int)$post_data['due_day'] : 20;
+        
+        // Validate month and year
+        if ($month < 1 || $month > 12) {
+            $result = [
+                'success' => false,
+                'message' => 'Invalid month selected'
+            ];
+        } elseif ($year < 2020 || $year > 2050) {
+            $result = [
+                'success' => false,
+                'message' => 'Invalid year selected'
+            ];
+        } elseif ($due_day < 1 || $due_day > 31) {
+            $result = [
+                'success' => false,
+                'message' => 'Invalid due day selected'
+            ];
+        } else {
+            // Execute the generation with custom month/year
+            $result = $this->Student_fee_model->generate_monthly_fees($month, $year, $due_day);
+        }
 
         // Prepare response message
         if ($result['success']) {
-            $message = "Monthly fees generated successfully! ";
+            $month_name = date('F', mktime(0, 0, 0, $month, 1));
+            $message = "Monthly fees generated successfully for {$month_name} {$year}! ";
             $message .= "Generated: {$result['generated']} bills, ";
             $message .= "Skipped: {$result['skipped']} (already exist), ";
             $message .= "Total students: {$result['total_students']}";
