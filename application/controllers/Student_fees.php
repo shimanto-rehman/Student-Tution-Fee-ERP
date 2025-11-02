@@ -241,10 +241,11 @@ class Student_fees extends CI_Controller {
      * Can be triggered manually from the UI or automatically on the 1st
      */
     public function generate_all_monthly_fees() {
-        // Check if this is an AJAX request
+        // Check if this is an AJAX request or API call
         $is_ajax = $this->input->is_ajax_request();
+        $is_api_call = $this->is_api_request();
 
-        log_message('info', 'Manual monthly fee generation triggered by user');
+        log_message('info', 'Monthly fee generation triggered - AJAX: ' . ($is_ajax ? 'Yes' : 'No') . ', API: ' . ($is_api_call ? 'Yes' : 'No'));
 
         // Get POST data (month, year, due_day)
         $post_data = json_decode($this->input->raw_input_stream, true);
@@ -288,8 +289,8 @@ class Student_fees extends CI_Controller {
         }
 
         // Return response based on request type
-        if ($is_ajax) {
-            // AJAX request - return JSON
+        if ($is_ajax || $is_api_call) {
+            // AJAX/API request - return JSON
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode([

@@ -152,11 +152,11 @@ if ($has_filters):
                                 <td><strong class="text-primary">৳<?= number_format($fee->total_amount, 2) ?></strong></td>
                                 <td>
                                     <?php if ($fee->payment_status === 'Paid'): ?>
-                                        <span class="badge-paid">Paid</span>
+                                        <span class="badge bg-success">Paid</span>
                                     <?php elseif ($fee->payment_status === 'Partial'): ?>
-                                        <span class="badge-partial">Partial</span>
+                                        <span class="badge bg-warning">Partial</span>
                                     <?php else: ?>
-                                        <span class="badge-unpaid">Unpaid</span>
+                                        <span class="badge bg-danger">Unpaid</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>

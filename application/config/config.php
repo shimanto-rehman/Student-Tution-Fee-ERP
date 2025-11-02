@@ -530,3 +530,15 @@ $config['rewrite_short_tags'] = FALSE;
 | Array:		array('10.0.1.200', '192.168.5.0/24')
 */
 $config['proxy_ips'] = '';
+
+/*
+|--------------------------------------------------------------------------
+| API Secret Key Configuration
+|--------------------------------------------------------------------------
+|
+| API key for authenticating all API requests
+| IMPORTANT: Change this to a secure random string in production!
+| Generate one using: openssl rand -hex 64
+|
+*/
+$config['api_secret_key'] = 'yDuOlgKWYrYNjuEbfscZHOmnx0y532V7qQyTTqyY6p+T6UK7R3gIRZWAZwB2p6BXptXrbnycIj/rTj8P/DQHHQ==';

@@ -191,17 +191,21 @@ class Student_fee_model extends CI_Model {
         log_message('info', "Generating fees for: {$month_year}, Due Date: {$due_date}");
         
         // Get monthly fee amount from fees_master table (id=2, fee_type='monthly')
-        $this->db->select('fee_amount');
+        $this->db->select('id, fee_name, fee_amount, fee_type');
         $this->db->where('id', 2);
         $this->db->where('fee_type', 'monthly');
         $fees_master_query = $this->db->get('fees_master');
         
-        $default_monthly_fee = 1000; // Fallback default
+        $default_monthly_fee = 10000; // Fallback default
+        $fee_id = null;
+
         if ($fees_master_query->num_rows() > 0) {
             $fees_master = $fees_master_query->row();
+            $fee_id = $fees_master->id;
             $default_monthly_fee = floatval($fees_master->fee_amount);
             log_message('info', "Monthly fee from fees_master: {$default_monthly_fee}");
         } else {
+            $fee_id = 0;
             log_message('warning', "Monthly fee not found in fees_master, using default: {$default_monthly_fee}");
         }
         
@@ -222,7 +226,8 @@ class Student_fee_model extends CI_Model {
         $generated = 0;
         $skipped = 0;
         $errors = [];
-        
+        $current_timestamp = date('Y-m-d H:i:s');
+
         foreach ($students as $student) {
             // Check if fee already exists for this month
             if ($this->fee_exists($student->id, $month_year)) {
@@ -233,7 +238,7 @@ class Student_fee_model extends CI_Model {
             
             // Use monthly fee amount from fees_master (id=2, fee_type='monthly')
             $fee_amount = $default_monthly_fee;
-            
+            $bill_unique_id = $this->generate_bill_unique_id($student->id, $month, $year, $fee_id);
             // Create fee record
             $fee_data = [
                 'student_id' => $student->id,
@@ -241,10 +246,14 @@ class Student_fee_model extends CI_Model {
                 'month_year' => $month_year,
                 'bill_month' => $month,
                 'bill_year' => $year,
+                'bill_unique_id' => $bill_unique_id,
                 'due_date' => $due_date,
                 'base_amount' => $fee_amount,
                 'late_fee' => 0,
-                'payment_status' => 'Unpaid'
+                'created' => $current_timestamp,
+                'status' => '0',
+                'payment_status' => 'Unpaid',
+                'comments' => 'Auto-generated monthly bill'
             ];
             
             if ($this->db->insert($this->table, $fee_data)) {
@@ -271,6 +280,10 @@ class Student_fee_model extends CI_Model {
             'year' => $year,
             'errors' => $errors
         ];
+    }
+
+    private function generate_bill_unique_id($student_id, $month, $year, $fee_id) {
+        return (int)($year . $month . str_pad($student_id, 6, '0', STR_PAD_LEFT).$fee_id);
     }
     
     /**

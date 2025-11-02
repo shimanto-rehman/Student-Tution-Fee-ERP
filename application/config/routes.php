@@ -46,3 +46,10 @@ $route['api/mtb/payment-status/(:any)'] = 'api/mtb_gateway/check_payment_status/
 // Due Bills API Routes
 $route['api/due-bills/check'] = 'api/due_bills/check';
 $route['api/due-bills/get'] = 'api/due_bills/get';
+
+// Paid Bills API Routes
+$route['api/paid-bills/check'] = 'api/paid_bills/check';
+$route['api/paid-bills/get'] = 'api/paid_bills/get';
+
+// Generate Monthly Fees API Route
+$route['api/generate-monthly-fees'] = 'api/generate_bill/api_generate_monthly_fees';

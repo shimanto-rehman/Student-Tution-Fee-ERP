@@ -17,3 +17,11 @@ $hook['post_controller_constructor'][] = array(
     'filename' => 'AutoFeeHook.php',
     'filepath' => 'hooks'
 );
+
+// API Key Authentication Hook - validates API keys for API routes
+$hook['post_controller_constructor'][] = array(
+    'class'    => 'Api_auth',
+    'function' => 'validate_api_key',
+    'filename' => 'Api_auth.php',
+    'filepath' => 'hooks'
+);
