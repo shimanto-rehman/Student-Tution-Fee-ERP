@@ -18,10 +18,10 @@ $hook['post_controller_constructor'][] = array(
     'filepath' => 'hooks'
 );
 
-// API Key Authentication Hook - validates API keys for API routes
+// JWT Authentication Hook - validates Bearer tokens for API routes
 $hook['post_controller_constructor'][] = array(
-    'class'    => 'Api_auth',
-    'function' => 'validate_api_key',
-    'filename' => 'Api_auth.php',
+    'class'    => 'Jwt_auth',
+    'function' => 'validate_api_token',
+    'filename' => 'Jwt_auth.php',
     'filepath' => 'hooks'
 );

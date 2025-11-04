@@ -251,12 +251,13 @@ function exportToCSV() {
     
     <?php foreach ($payments as $payment): ?>
     csv += '<?= $payment->id ?>,';
-    csv += '<?= date('Y-m-d', strtotime($payment->payment_date)) ?>,';
+    // Force Excel to treat date as text to avoid ####### display
+    csv += '="<?= date('Y-m-d', strtotime($payment->payment_date)) ?>",';
     csv += '"<?= addslashes($payment->name) ?>",';
     csv += '<?= $payment->reg_no ?>,';
     csv += '<?= date('Y-m', strtotime($payment->month_year . '-01')) ?>,';
     csv += '<?= $payment->amount_paid ?>,';
-    csv += '<?= $payment->payment_mode ?>,';
+    csv += '<?= isset($payment->payment_mode) ? $payment->payment_mode : (isset($payment->payment_method) ? $payment->payment_method : "") ?>,';
     csv += '"<?= $payment->transaction_id ?? '' ?>",';
     csv += '<?= $payment->mtb_payment_status ?? 'completed' ?>\n';
     <?php endforeach; ?>
@@ -271,10 +272,96 @@ function exportToCSV() {
 }
 
 function exportToPDF() {
-    // This would require a PDF library or server-side generation
-    alert('PDF export functionality can be implemented using jsPDF or server-side PDF generation.');
+    ensurePdfLibs().then(function() {
+        const jsPDFRef = window.jspdf || {};
+        const DocCtor = jsPDFRef.jsPDF || window.jsPDF;
+        if (!DocCtor || !window.jspdf || !window.jspdf.jsPDF || !window.jspdf.jsPDF.prototype) {
+            alert('PDF library failed to load.');
+            return;
+        }
+        const doc = new DocCtor({ orientation: 'landscape', unit: 'pt', format: 'A4' });
+        const title = 'Payments Export';
+        doc.setFontSize(14);
+        doc.text(title, 40, 30);
+
+        const headers = [[
+            'ID','Date','Student','Reg No','Month','Amount','Mode','Transaction ID','Status'
+        ]];
+
+        const rows = [
+            <?php foreach ($payments as $payment): ?>
+            [
+                '<?= $payment->id ?>',
+                '<?= date('Y-m-d', strtotime($payment->payment_date)) ?>',
+                '<?= addslashes($payment->name) ?>',
+                '<?= $payment->reg_no ?>',
+                '<?= date('Y-m', strtotime($payment->month_year . '-01')) ?>',
+                '<?= number_format($payment->amount_paid, 2) ?>',
+                '<?= isset($payment->payment_mode) ? ucfirst($payment->payment_mode) : (isset($payment->payment_method) ? ucfirst($payment->payment_method) : '') ?>',
+                '<?= $payment->transaction_id ?? 'N/A' ?>',
+                '<?= $payment->mtb_payment_status ?? 'completed' ?>'
+            ],
+            <?php endforeach; ?>
+        ];
+
+        if (doc.autoTable) {
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: 50,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [52, 152, 219] }
+            });
+            doc.save('payments_' + new Date().toISOString().split('T')[0] + '.pdf');
+        } else if (window.jspdf && window.jspdf.plugin && window.jspdf.plugin.autoTable) {
+            // Some builds attach autoTable to plugin namespace
+            window.jspdf.plugin.autoTable(doc, {
+                head: headers,
+                body: rows,
+                startY: 50
+            });
+            doc.save('payments_' + new Date().toISOString().split('T')[0] + '.pdf');
+        } else {
+            alert('PDF table plugin not available.');
+        }
+    }).catch(function() {
+        alert('Could not load PDF libraries. Check your network connection.');
+    });
+}
+
+function loadScriptOnce(src, id) {
+    return new Promise(function(resolve, reject) {
+        if (id && document.getElementById(id)) return resolve();
+        var s = document.createElement('script');
+        if (id) s.id = id;
+        s.src = src;
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+function ensurePdfLibs() {
+    var hasJsPDF = typeof window.jspdf !== 'undefined' || typeof window.jsPDF !== 'undefined';
+    var autoTableLoaded = !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.prototype && window.jspdf.jsPDF.prototype.autoTable) || !!(window.jspdf && window.jspdf.plugin && window.jspdf.plugin.autoTable);
+
+    var jsPdfPromise = hasJsPDF ? Promise.resolve() : loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'jspdf-umd');
+
+    return jsPdfPromise.then(function() {
+        if (autoTableLoaded) return;
+        // after jsPDF, load autotable
+        return loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', 'jspdf-autotable');
+    }).then(function() {
+        // small delay to allow UMD to initialize
+        return new Promise(function(res){ setTimeout(res, 100); });
+    });
 }
 </script>
+
+<!-- jsPDF and autoTable CDN for client-side PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-YkC7nq2l2yT5Hq0v5k6m0e5t3B5lE2z6q9vC2v3m5y6b7z8w9x0yZ6v1n8c2kO8N9yCwzM1kZP1HkB8oQkS8NA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha512-3mY0Cw6T1uX7gTt3e9gL2kQ5m6a5xqJv2qgk6+v3WmE6P3n6bS7j8R3s9nL2xAqfCqz0J1M8Gv8nG0H5m7b9Mg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <style media="print">
     .btn, .card-header, .pagination, .export-section { display: none; }

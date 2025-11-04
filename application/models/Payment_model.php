@@ -12,12 +12,31 @@ class Payment_model extends CI_Model {
     }
     
     // Get all payments
-    public function get_all($limit = 100, $offset = 0) {
+    public function get_all($limit = 100, $offset = 0, $filters = []) {
         $this->db->select('p.*, sf.month_year, s.name, s.reg_no');
         $this->db->from($this->table . ' p');
         $this->db->join('student_fees sf', 'sf.id = p.student_fee_id');
         $this->db->join('student s', 's.id = sf.student_id');
         $this->db->where('p.status', '1');
+
+        // Apply filters
+        if (!empty($filters['search'])) {
+            $search = trim($filters['search']);
+            $this->db->group_start();
+            $this->db->like('s.name', $search);
+            $this->db->or_like('s.reg_no', $search);
+            $this->db->group_end();
+        }
+        if (!empty($filters['mode'])) {
+            $this->db->where('p.payment_mode', $filters['mode']);
+        }
+        if (!empty($filters['from_date'])) {
+            $this->db->where('p.payment_date >=', $filters['from_date']);
+        }
+        if (!empty($filters['to_date'])) {
+            $this->db->where('p.payment_date <=', $filters['to_date']);
+        }
+
         $this->db->limit($limit, $offset);
         $this->db->order_by('p.created', 'DESC');
         return $this->db->get()->result();

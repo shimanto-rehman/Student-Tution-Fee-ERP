@@ -16,7 +16,7 @@ class Paid_bills extends CI_Controller {
         // Enable CORS if needed
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, X-API-Key');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
         
         // Handle preflight requests
         if ($this->input->method() === 'options') {
@@ -78,13 +78,13 @@ class Paid_bills extends CI_Controller {
         // Get all fees for this student
         $all_fees = $this->Student_fee_model->get_by_student($student_record->id);
         
-        // Filter for PAID bills only
+        // Filter for PAID or PARTIAL bills
         // Note: status='0' means active, status='1' means deleted
         $paid_bills = array_filter($all_fees, function($fee) {
-            return $fee->payment_status === 'Paid' && $fee->status == '0';
+            return in_array($fee->payment_status, ['Paid', 'Partial']) && $fee->status == '0';
         });
         
-        // Get payment details for each paid bill
+        // Get payment details for each paid/partial bill and compute remaining due
         $formatted_bills = [];
         foreach (array_values($paid_bills) as $fee) {
             // Get all payments for this fee - using direct DB query
@@ -96,6 +96,7 @@ class Paid_bills extends CI_Controller {
             // Format payment history
             $payment_history = [];
             $first_payment_date = null;
+            $total_paid = 0.0;
             
             foreach ($payments as $payment) {
                 if ($first_payment_date === null) {
@@ -104,14 +105,23 @@ class Paid_bills extends CI_Controller {
                 
                 $payment_history[] = [
                     'payment_id' => $payment->id,
-                    'amount_paid' => floatval(isset($payment->amount) ? $payment->amount : 0),
+                    'amount_paid' => floatval(isset($payment->amount_paid) ? $payment->amount_paid : (isset($payment->amount) ? $payment->amount : 0)),
                     'payment_date' => isset($payment->payment_date) ? $payment->payment_date : null,
                     'payment_method' => isset($payment->payment_method) ? $payment->payment_method : null,
                     'transaction_id' => isset($payment->transaction_id) ? $payment->transaction_id : null,
                     'received_by' => isset($payment->received_by) ? $payment->received_by : null
                 ];
+                // Count only active/successful payments if flags exist; else include
+                $is_active = !isset($payment->status) || $payment->status == '1';
+                $is_success = !isset($payment->mtb_payment_status) || $payment->mtb_payment_status === 'success';
+                if ($is_active && $is_success) {
+                    $total_paid += floatval(isset($payment->amount_paid) ? $payment->amount_paid : (isset($payment->amount) ? $payment->amount : 0));
+                }
             }
             
+            $expected_total = floatval($fee->base_amount) + floatval($fee->late_fee);
+            $remaining_due = max(0, $expected_total - $total_paid);
+
             $formatted_bills[] = [
                 'bill_id' => $fee->id,
                 'month_year' => $fee->month_year,
@@ -124,6 +134,8 @@ class Paid_bills extends CI_Controller {
                     'base_amount' => floatval($fee->base_amount),
                     'late_fee' => floatval($fee->late_fee),
                     'total_amount' => floatval($fee->total_amount),
+                    'total_paid' => $total_paid,
+                    'remaining_due' => $remaining_due,
                     'currency' => 'BDT'
                 ],
                 'paid_on_time' => $first_payment_date ? (strtotime($first_payment_date) <= strtotime($fee->due_date)) : false,
@@ -215,12 +227,12 @@ class Paid_bills extends CI_Controller {
         // Get all fees for this student
         $all_fees = $this->Student_fee_model->get_by_student($student_record->id);
         
-        // Filter for PAID bills only
+        // Filter for PAID or PARTIAL bills
         $paid_bills = array_filter($all_fees, function($fee) {
-            return $fee->payment_status === 'Paid' && $fee->status == '0';
+            return in_array($fee->payment_status, ['Paid', 'Partial']) && $fee->status == '0';
         });
         
-        // Get payment details for each paid bill
+        // Get payment details for each paid/partial bill and compute remaining due
         $formatted_bills = [];
         foreach (array_values($paid_bills) as $fee) {
             // Get all payments for this fee - using direct DB query
@@ -232,6 +244,7 @@ class Paid_bills extends CI_Controller {
             // Format payment history
             $payment_history = [];
             $first_payment_date = null;
+            $total_paid = 0.0;
             
             foreach ($payments as $payment) {
                 if ($first_payment_date === null) {
@@ -240,14 +253,22 @@ class Paid_bills extends CI_Controller {
                 
                 $payment_history[] = [
                     'payment_id' => $payment->id,
-                    'amount_paid' => floatval(isset($payment->amount) ? $payment->amount : 0),
+                    'amount_paid' => floatval(isset($payment->amount_paid) ? $payment->amount_paid : (isset($payment->amount) ? $payment->amount : 0)),
                     'payment_date' => isset($payment->payment_date) ? $payment->payment_date : null,
                     'payment_method' => isset($payment->payment_method) ? $payment->payment_method : null,
                     'transaction_id' => isset($payment->transaction_id) ? $payment->transaction_id : null,
                     'received_by' => isset($payment->received_by) ? $payment->received_by : null
                 ];
+                $is_active = !isset($payment->status) || $payment->status == '1';
+                $is_success = !isset($payment->mtb_payment_status) || $payment->mtb_payment_status === 'success';
+                if ($is_active && $is_success) {
+                    $total_paid += floatval(isset($payment->amount_paid) ? $payment->amount_paid : (isset($payment->amount) ? $payment->amount : 0));
+                }
             }
             
+            $expected_total = floatval($fee->base_amount) + floatval($fee->late_fee);
+            $remaining_due = max(0, $expected_total - $total_paid);
+
             $formatted_bills[] = [
                 'bill_id' => $fee->id,
                 'month_year' => $fee->month_year,
@@ -260,6 +281,8 @@ class Paid_bills extends CI_Controller {
                     'base_amount' => floatval($fee->base_amount),
                     'late_fee' => floatval($fee->late_fee),
                     'total_amount' => floatval($fee->total_amount),
+                    'total_paid' => $total_paid,
+                    'remaining_due' => $remaining_due,
                     'currency' => 'BDT'
                 ],
                 'paid_on_time' => $first_payment_date ? (strtotime($first_payment_date) <= strtotime($fee->due_date)) : false,

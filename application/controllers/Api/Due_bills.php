@@ -15,7 +15,7 @@ class Due_bills extends CI_Controller {
         // Enable CORS if needed
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, X-API-Key');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
         
         // Handle preflight requests
         if ($this->input->method() === 'options') {

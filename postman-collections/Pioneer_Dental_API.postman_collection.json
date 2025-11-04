@@ -1,0 +1,586 @@
+{
+	"info": {
+		"_postman_id": "pioneer-dental-api-v1",
+		"name": "Pioneer Dental API Collection",
+		"description": "Complete API collection for Pioneer Dental Fee Management System. Includes JWT authentication and all endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "pioneer-dental"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login - Get JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.token) {",
+									"        // Save token to collection variable",
+									"        pm.collectionVariables.set('jwt_token', jsonData.token);",
+									"        console.log('Token saved successfully');",
+									"        console.log('Token expires in: ' + jsonData.expires_in + ' seconds');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"client_id\": \"mtb_gateway\",\n    \"client_secret\": \"mtb_secret_key_12345\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate and get JWT token. This is the ONLY endpoint that doesn't require authentication. The token will be automatically saved to collection variable 'jwt_token' for use in other requests."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/validate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"validate"
+							]
+						},
+						"description": "Validate if your JWT token is still valid. Useful for testing."
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for obtaining and validating JWT tokens."
+		},
+		{
+			"name": "Due Bills",
+			"item": [
+				{
+					"name": "Check Due Bills (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 1829,\n    \"phone\": \"01711781724\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/due-bills/check",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"due-bills",
+								"check"
+							]
+						},
+						"description": "Get all unpaid or partially paid bills for a student. Either student_id OR phone is required (or both for better security)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Due Bills (GET)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/due-bills/get?student_id=1829&phone=01711781724",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"due-bills",
+								"get"
+							],
+							"query": [
+								{
+									"key": "student_id",
+									"value": "1829",
+									"description": "Student ID or registration number"
+								},
+								{
+									"key": "phone",
+									"value": "01711781724",
+									"description": "Student or parent phone number"
+								}
+							]
+						},
+						"description": "Same as POST method, but using GET with URL parameters. Easier for simple testing."
+					},
+					"response": []
+				},
+				{
+					"name": "Check Due Bills - Student ID Only",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 1829\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/due-bills/check",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"due-bills",
+								"check"
+							]
+						},
+						"description": "Example: Using only student_id (phone is optional)"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Due Bills - Phone Only",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"01711781724\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/due-bills/check",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"due-bills",
+								"check"
+							]
+						},
+						"description": "Example: Using only phone number (student_id is optional)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for retrieving unpaid or partially paid bills."
+		},
+		{
+			"name": "Paid Bills",
+			"item": [
+				{
+					"name": "Check Paid Bills (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 1829,\n    \"phone\": \"01711781724\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/paid-bills/check",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"paid-bills",
+								"check"
+							]
+						},
+						"description": "Get all paid or partially paid bills with payment history for a student."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Paid Bills (GET)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/paid-bills/get?student_id=1829&phone=01711781724",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"paid-bills",
+								"get"
+							],
+							"query": [
+								{
+									"key": "student_id",
+									"value": "1829"
+								},
+								{
+									"key": "phone",
+									"value": "01711781724"
+								}
+							]
+						},
+						"description": "Same as POST method, but using GET with URL parameters."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for retrieving paid bills with payment history."
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Process Single Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 1829,\n    \"bill_month\": 11,\n    \"bill_year\": 2025,\n    \"amount\": 10150,\n    \"payment_method\": \"gateway\",\n    \"external_ref\": \"PGW-REF-123456\",\n    \"transaction_ref\": \"BANK-TXN-789012\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/process",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"process"
+							]
+						},
+						"description": "Record a single payment for a student. Used by payment gateways to record successful payments."
+					},
+					"response": []
+				},
+				{
+					"name": "Process Multiple Payments",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 1829,\n    \"payments\": [\n        {\n            \"bill_month\": 9,\n            \"bill_year\": 2025,\n            \"amount\": 10000\n        },\n        {\n            \"bill_month\": 10,\n            \"bill_year\": 2025,\n            \"amount\": 10150\n        },\n        {\n            \"bill_month\": 11,\n            \"bill_year\": 2025\n        }\n    ],\n    \"payment_method\": \"gateway\",\n    \"external_ref\": \"BATCH-REF-7788\",\n    \"transaction_ref\": \"BANK-TXN-999888\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/process",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"process"
+							]
+						},
+						"description": "Record multiple payments in a single request. Note: If amount is omitted for an item, it will pay the full remaining due for that bill."
+					},
+					"response": []
+				},
+				{
+					"name": "Process Payment - Pay Full Amount",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_id\": 1829,\n    \"bill_month\": 11,\n    \"bill_year\": 2025,\n    \"payment_method\": \"gateway\",\n    \"transaction_ref\": \"BANK-TXN-789012\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/process",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"process"
+							]
+						},
+						"description": "Example: Pay full remaining due amount (amount field omitted - will pay whatever is remaining)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for processing payments. Used by payment gateways to record successful transactions."
+		},
+		{
+			"name": "Cron Jobs / Automation",
+			"item": [
+				{
+					"name": "Generate Monthly Fees",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"month\": 11,\n    \"year\": 2025,\n    \"due_day\": 20\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/generate-monthly-fees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"generate-monthly-fees"
+							]
+						},
+						"description": "Automatically generate monthly fees for ALL active students. Typically called via cron job. All parameters are optional (uses current month/year if omitted)."
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Monthly Fees - Current Month",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/generate-monthly-fees",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"generate-monthly-fees"
+							]
+						},
+						"description": "Example: Generate fees for current month (all parameters omitted - uses defaults)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for automated tasks like generating monthly fees. Typically used by cron jobs."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost/pioneer-dental",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

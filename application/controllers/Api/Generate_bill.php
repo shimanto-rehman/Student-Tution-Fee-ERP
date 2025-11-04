@@ -128,11 +128,14 @@ class Generate_bill extends CI_Controller {
 }
 
 // Usage Example:
+// 1. First get JWT token from /api/auth/login
+// 2. Then use it for this endpoint:
+//
 // curl -X POST "http://localhost/pioneer-dental/api/generate-monthly-fees" \
-//  -H "X-API-Key: YOUR_API_KEY_HERE" \
+//  -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NjIxMTgyMzQsImV4cCI6MTc2MjIwNDYzNCwiZGF0YSI6eyJjbGllbnRfaWQiOiJtdGJfZ2F0ZXdheSIsImlzc3VlZF9hdCI6IjIwMjUtMTEtMDIgMjI6MTc6MTQiLCJpcF9hZGRyZXNzIjoiOjoxIn19.HWehCOybXFT1ObQA8U2BL7h1CH941IqM0cpI_dq0CaQ" \
 //  -H "Content-Type: application/json" \
 //  -d '{"month": 11, "year": 2025, "due_day": 20}'
 //
-// Cron job Command:
+// Cron job Command (with JWT):
 // 0 2 2 * * curl -X POST "http://localhost/pioneer-dental/api/generate-monthly-fees" \
-//  -H "X-API-Key: YOUR_API_KEY_HERE" >> /var/log/monthly_fees.log 2>&1
+//  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" >> /var/log/monthly_fees.log 2>&1

@@ -533,12 +533,40 @@ $config['proxy_ips'] = '';
 
 /*
 |--------------------------------------------------------------------------
-| API Secret Key Configuration
+| Cron Job API Key
 |--------------------------------------------------------------------------
 |
-| API key for authenticating all API requests
+| API key for authenticating cron job requests
+| IMPORTANT: Change this to a secure random string in production!
+| Generate one using: openssl rand -hex 32
+|
+*/
+
+/*
+|--------------------------------------------------------------------------
+| JWT Configuration
+|--------------------------------------------------------------------------
+|
+| JWT Secret Key for token generation and validation
 | IMPORTANT: Change this to a secure random string in production!
 | Generate one using: openssl rand -hex 64
 |
+| JWT Token Expiration: Default expiration time in seconds (default: 86400 = 24 hours)
+|
 */
-$config['api_secret_key'] = 'yDuOlgKWYrYNjuEbfscZHOmnx0y532V7qQyTTqyY6p+T6UK7R3gIRZWAZwB2p6BXptXrbnycIj/rTj8P/DQHHQ==';
+$config['jwt_secret_key'] = 'yDuOlgKWYrYNjuEbfscZHOmnx0y532V7qQyTTqyY6p+T6UK7R3gIRZWAZwB2p6BXptXrbnycIj/rTj8P/DQHHQ==';
+$config['jwt_expiration_time'] = 86400; // 24 hours in seconds
+
+/*
+|--------------------------------------------------------------------------
+| API Authentication Configuration
+|--------------------------------------------------------------------------
+|
+| API credentials for payment gateway partners
+| This should be stored securely in production (database or encrypted file)
+| Format: 'client_id' => 'client_secret'
+|
+*/
+$config['api_clients'] = [
+    'mtb_gateway' => 'mtb_secret_key_12345', // Example - change in production
+];

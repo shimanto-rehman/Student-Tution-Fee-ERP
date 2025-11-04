@@ -22,8 +22,16 @@ class Payments extends CI_Controller {
         
         $limit = 50;
         $offset = $this->input->get('offset') ?? 0;
-        
-        $data['payments'] = $this->Payment_model->get_all($limit, $offset);
+
+        // Collect filters from query string
+        $filters = [
+            'search' => $this->input->get('search'),
+            'mode' => $this->input->get('mode'),
+            'from_date' => $this->input->get('from_date'),
+            'to_date' => $this->input->get('to_date')
+        ];
+
+        $data['payments'] = $this->Payment_model->get_all($limit, $offset, $filters);
         $data['offset'] = $offset;
         $data['limit'] = $limit;
         
