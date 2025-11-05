@@ -1118,6 +1118,7 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: nowrap;
 }
 
 .student-avatar {
